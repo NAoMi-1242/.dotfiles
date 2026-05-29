@@ -96,11 +96,6 @@ local SOLID_LEFT_ARROW = wezterm.nerdfonts.ple_lower_right_triangle
 local SOLID_RIGHT_ARROW = wezterm.nerdfonts.ple_upper_left_triangle
 
 
--- SNCの状態を保持するグローバル変数の初期化
-if wezterm.GLOBAL.snc_status == nil then
-    wezterm.GLOBAL.snc_status = "synced"
-end
-
 -- WSLパスから.gitを遡って検索する関数
 local function find_git_root_wsl(wsl_path)
     local current = wsl_path
@@ -140,7 +135,7 @@ local function get_display_title(wsl_path)
         return "~"
     end
 
-    -- 【修正箇所】Windows側ホームディレクトリ自体の場合はユーザー名（例: 81806）をそのまま返す
+    -- Windows側ホームディレクトリ自体の場合はユーザー名をそのまま返す
     if path == win_home_wsl_path then
         return win_user
     end
@@ -166,7 +161,7 @@ local function get_display_title(wsl_path)
         end
     end
 
-    -- 【修正箇所】WSLのユーザー名のみ「~/」に置換（Windows側は「~/」に置換しない）
+    -- WSLのユーザー名のみ「~/」に置換（Windows側は「~/」に置換しない）
     if wsl_user then
         title_result = title_result:gsub("^" .. wsl_user .. "/", "~/")
     end
@@ -199,28 +194,9 @@ wezterm.on("format-tab-title", function(tab, tabs, panes, config, hover, max_wid
         end
     end
 
-    -- メモリ上のSNC状態を取得してアイコンを決定
-    local status = wezterm.GLOBAL.snc_status or "synced"
-    local status_icon = "✅  "
-
-    if status == "fetching" then
-        status_icon = "🔄  "
-    elseif status == "need_merge" then
-        status_icon = "📥  "
-    elseif status == "error" then
-        status_icon = "⚠️  "
-    elseif status == "conflict" then
-        status_icon = "❌  "
-    end
-
-    -- フラットな文字列キーからタイトルを取得
+    -- フラットな文字列キーからタイトルを取得（SNC関連のアイコン記述は削除）
     local title_key = "snc_title_" .. tostring(pane_id)
     local title_text = wezterm.GLOBAL[title_key] or tab.active_pane.title
-
-    -- 現在アクティブな（開いている）タブのタイトルにのみ状態アイコンを付与
-    if tab.is_active then
-        title_text = status_icon .. title_text
-    end
 
     local title = "   " .. title_text .. "   "
 
@@ -237,7 +213,7 @@ wezterm.on("format-tab-title", function(tab, tabs, panes, config, hover, max_wid
     }
 end)
 
------------ Ctrl + Shift + Z 用関数 & SNC状態同期 -----------
+----------- Ctrl + Shift + Z 用関数 -----------
 local function apply_zoom_style(window, is_zoomed)
     if is_zoomed then
         local dims = window:get_dimensions()
@@ -272,30 +248,10 @@ local function is_tab_zoomed(tab)
     return false
 end
 
-local last_check_time = 0
-
 -- マウス操作や定期同期イベント
 wezterm.on("update-status", function(window, pane)
     local tab = window:active_tab()
     apply_zoom_style(window, is_tab_zoomed(tab))
-
-    -- 2秒ごとにWindows側の状態キャッシュファイルをチェック
-    local current_time = os.time()
-    if current_time - last_check_time >= 2 then
-        last_check_time = current_time
-        
-        local filepath = win_home .. [[\.dotfiles\.status]]
-        local f = io.open(filepath, "r")
-        if f then
-            local status = f:read("*l")
-            f:close()
-            if status then
-                wezterm.GLOBAL.snc_status = status:gsub("%s+", "")
-            end
-        else
-            wezterm.GLOBAL.snc_status = "synced"
-        end
-    end
 end)
 
 ----------- キー割り当て -----------
@@ -363,7 +319,11 @@ config.keys = {
         action = wezterm.action_callback(function(window, pane)
             local tab = window:active_tab()
             local currently_zoomed = is_tab_zoomed(tab)
+
+            -- 状態反映の遅れを避けるため、先に見た目を切り替える
             apply_zoom_style(window, not currently_zoomed)
+
+            -- その後で実際のズーム切り替えを実行する
             window:perform_action(wezterm.action.TogglePaneZoomState, pane)
         end),
     },
