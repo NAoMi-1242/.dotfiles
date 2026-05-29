@@ -1,0 +1,53 @@
+#!/bin/bash
+
+DOTFILES_DIR="/mnt/c/Users/81806/.dotfiles"
+STATUS_FILE="${DOTFILES_DIR}/.status"
+
+if [ ! -d "$DOTFILES_DIR" ]; then
+    exit 1
+fi
+
+case "$1" in
+    f)
+        echo "fetching" > "$STATUS_FILE"
+        (
+            cd "$DOTFILES_DIR" || exit 1
+            # リモートの最新情報を取得
+            git fetch >/dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                echo "error" > "$STATUS_FILE"
+                exit 1
+            fi
+
+            # ローカルとリモートのコミットIDを比較
+            LOCAL=$(git rev-parse HEAD)
+            REMOTE=$(git rev-parse @{u} 2>/dev/null)
+
+            if [ -z "$REMOTE" ]; then
+                echo "synced" > "$STATUS_FILE"
+            elif [ "$LOCAL" = "$REMOTE" ]; then
+                echo "synced" > "$STATUS_FILE"
+            else
+                echo "need_merge" > "$STATUS_FILE"
+            fi
+        ) &
+        ;;
+    m)
+        echo "fetching" > "$STATUS_FILE"
+        cd "$DOTFILES_DIR" || exit 1
+        echo "🔄 設定ファイルをリモートから更新中..."
+        
+        # 自身を含むすべての設定を一括でpull
+        git pull origin "$(git branch --show-current)" >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            echo "synced" > "$STATUS_FILE"
+            echo "✅ 完全に最新状態に同期されました。ターミナルを再起動するか、設定を再読み込みしてください。"
+        else
+            echo "conflict" > "$STATUS_FILE"
+            echo "❌ 自動マージに失敗しました。手動で競合（Conflict）を解消してください。"
+        fi
+        ;;
+    *)
+        echo "Usage: snc {f|m}"
+        ;;
+esac
