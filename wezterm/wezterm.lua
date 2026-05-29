@@ -1,7 +1,7 @@
 local wezterm = require 'wezterm'
 local config = wezterm.config_builder()
 
--- 【動的取得】Windowsのホームディレクトリパスとユーザー名を動的に取得
+-- Windowsのホームディレクトリパスとユーザー名を動的に取得
 local win_home = wezterm.home_dir
 local win_user = win_home:match("[^\\]+$") or "default"
 
