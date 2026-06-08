@@ -14,6 +14,21 @@ config.launch_menu = {
         args = { "pwsh.exe" },
         domain = { DomainName = "local" },
     },
+    
+
+    -- 講義用 Git Bash (MINGW64) 後で消す
+    {
+        label = "Git Bash (MINGW64)",
+        args = { 
+            "C:\\oit\\se26-byod\\PortableGit-2.50.0-64\\bin\\bash.exe", 
+            "--login",
+            "-i",
+            "-c", 
+            "cd && exec bash" 
+        },
+        domain = { DomainName = "local" },
+    },
+    
 
     -- Windows PowerShell (通常)
     {
