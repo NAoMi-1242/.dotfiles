@@ -232,7 +232,7 @@ end)
 local function apply_zoom_style(window, is_zoomed)
     if is_zoomed then
         local dims = window:get_dimensions()
-        local thickness = dims.pixel_width * 0.0275
+        local thickness = dims.pixel_width * 0.0125
 
         window:set_config_overrides({
             window_frame = {
