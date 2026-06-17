@@ -28,6 +28,17 @@ config.launch_menu = {
         },
         domain = { DomainName = "local" },
     },
+    -- Anaconda Prompt (base)
+    {
+        label = "Anaconda Prompt (base)",
+        args = {
+            "cmd.exe",
+            "/K",
+            "C:\\ProgramData\\anaconda3\\Scripts\\activate.bat",
+            "C:\\ProgramData\\anaconda3"
+        },
+        domain = { DomainName = "local" },
+    },
     
 
     -- Windows PowerShell (通常)
