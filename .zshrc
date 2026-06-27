@@ -146,7 +146,14 @@ ssh() {
                 read -rs SHIMAKAZE_PASS
                 echo ""
             fi
+
             sshpass -p "$SHIMAKAZE_PASS" ssh "$@"
+
+            # 接続に失敗した場合（終了ステータスが0以外の場合）
+            if [ $? -ne 0 ]; then
+                echo "⚠️ 接続に失敗したため、記憶したパスワードをクリアしました。"
+                unset SHIMAKAZE_PASS
+            fi
         else
             echo "sshpass is not installed. Please run: sudo apt install sshpass"
             command ssh "$@"
