@@ -138,6 +138,24 @@ export NVM_DIR="$HOME/.nvm"
 # Added by Antigravity CLI installer
 export PATH="/home/naomi/.local/bin:$PATH"
 
+ssh() {
+    if [[ "$*" == *"shimakaze@"* ]]; then
+        if command -v sshpass &> /dev/null; then
+            if [ -z "$SHIMAKAZE_PASS" ]; then
+                printf "Password for shimakaze: "
+                read -rs SHIMAKAZE_PASS
+                echo ""
+            fi
+            sshpass -p "$SHIMAKAZE_PASS" ssh "$@"
+        else
+            echo "sshpass is not installed. Please run: sudo apt install sshpass"
+            command ssh "$@"
+        fi
+    else
+        command ssh "$@"
+    fi
+}
+
 snc() {
     # 引数はすべて無視し、常に単体で実体スクリプトを実行
     command snc
