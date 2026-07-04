@@ -148,9 +148,9 @@ ssh() {
             fi
 
             sshpass -p "$SHIMAKAZE_PASS" ssh "$@"
+            SSH_STATUS=$?
 
-            # 接続に失敗した場合（終了ステータスが0以外の場合）
-            if [ $? -ne 0 ]; then
+            if [ $SSH_STATUS -ne 0 ]; then
                 echo "⚠️ 接続に失敗したため、記憶したパスワードをクリアしました。"
                 unset SHIMAKAZE_PASS
             fi
