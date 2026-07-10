@@ -138,6 +138,19 @@ export NVM_DIR="$HOME/.nvm"
 # Added by Antigravity CLI installer
 export PATH="/home/naomi/.local/bin:$PATH"
 
+snc() {
+    # 引数はすべて無視し、常に単体で実体スクリプトを実行
+    command snc
+    local exit_status=$?
+
+    # git pull がエラーなく正常終了した場合のみ、自動で source を実行
+    if [ $exit_status -eq 0 ]; then
+        echo "🔄 変更を適用するため、.zshrc を現在のターミナル環境に再読み込みしています..."
+        source ~/.zshrc
+        echo "✅ 設定の反映がすべて完了しました。"
+    fi
+}
+
 ssh() {
     if [[ "$*" == *"shimakaze@"* ]]; then
         if command -v sshpass &> /dev/null; then
@@ -145,6 +158,21 @@ ssh() {
                 printf "Password for shimakaze: "
                 read -rs SHIMAKAZE_PASS
                 echo ""
+            fi
+
+            local check_res
+            check_res=$(command ssh -o NumberOfPasswordPrompts=0 -o StrictHostKeyChecking=ask "$@" 2>&1)
+            local exit_status=$?
+
+            if [[ "$check_res" == *"Host key verification failed"* ]]; then
+                echo "$check_res" >&2
+                unset SHIMAKAZE_PASS
+                return $exit_status
+            fi
+
+            if [[ "$check_res" == *"Authenticity of host"* ]]; then
+                command ssh "$@"
+                return $?
             fi
 
             sshpass -p "$SHIMAKAZE_PASS" ssh "$@"
@@ -163,15 +191,14 @@ ssh() {
     fi
 }
 
-snc() {
-    # 引数はすべて無視し、常に単体で実体スクリプトを実行
-    command snc
-    local exit_status=$?
+ssht() {
+    local host="$1"
+    local session="${2:-tokunaga-session}"
 
-    # git pull がエラーなく正常終了した場合のみ、自動で source を実行
-    if [ $exit_status -eq 0 ]; then
-        echo "🔄 変更を適用するため、.zshrc を現在のターミナル環境に再読み込みしています..."
-        source ~/.zshrc
-        echo "✅ 設定の反映がすべて完了しました。"
+    if [ -z "$host" ]; then
+        echo "Usage: ssht <host> [session_name]"
+        return 1
     fi
+
+    ssh -t "$host" "tmux attach -t $session 2>/dev/null || tmux new-session -s $session"
 }
