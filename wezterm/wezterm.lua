@@ -277,7 +277,29 @@ end
 -- マウス操作や定期同期イベント
 wezterm.on("update-status", function(window, pane)
     local tab = window:active_tab()
-    apply_zoom_style(window, is_tab_zoomed(tab))
+    local tab_id = tab and tostring(tab:tab_id()) or "default"
+    
+    -- Wezterm自体のズーム、またはtmux側のズームのどちらかが有効ならパディングをつける
+    local wezterm_zoomed = is_tab_zoomed(tab)
+    local tmux_zoomed = wezterm.GLOBAL["tmux_zoom_" .. tab_id] == "1"
+
+    apply_zoom_style(window, wezterm_zoomed or tmux_zoomed)
+end)
+
+-- tmux等からのOSC 1337 (SetUserVar) シーケンスを受け取るリスナー
+wezterm.on("user-var-changed", function(window, pane, name, value)
+    if name == "TMUX_ZOOM" then
+        local tab = window:active_tab()
+        if tab then
+            local tab_id = tostring(tab:tab_id())
+            -- タブごとにtmuxのズーム状態を記憶する
+            wezterm.GLOBAL["tmux_zoom_" .. tab_id] = value
+            
+            -- 即座にスタイルに反映
+            local wezterm_zoomed = is_tab_zoomed(tab)
+            apply_zoom_style(window, wezterm_zoomed or (value == "1"))
+        end
+    end
 end)
 
 ----------- キー割り当て -----------

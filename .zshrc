@@ -193,12 +193,36 @@ ssh() {
 
 ssht() {
     local host="$1"
-    local session="${2:-tokunaga-session}"
+    shift
+    local session="tokunaga-session"
 
-    if [ -z "$host" ]; then
-        echo "Usage: ssht <host> [session_name]"
+    if [ -z "$host" ];
+    then
+        echo "Usage: ssht <host> [ssh_options]"
         return 1
     fi
 
-    ssh -t "$host" "tmux new-session -A -s $session"
+    if [ -f "$HOME/.tmux.conf" ]; then
+        local tmux_conf_content=$(cat "$HOME/.tmux.conf")
+
+        ssh -t "$host" "$@" "
+            export PATH='/usr/bin:/usr/local/bin:/bin:/usr/sbin:/sbin:\$PATH'
+            if ! tmux has-session -t \"$session\" 2>/dev/null; then
+                tmux new-session -d -s \"$session\"
+            fi
+
+            tmux eval-config \$(printf '%s' '"${tmux_conf_content//\'/\'\\\'\'}"') 2>/dev/null || \
+            printf '%s' '"${tmux_conf_content//\'/\'\\\'\'}"' | tmux source-file -
+
+            tmux send-keys -t \"$session\" C-u
+            tmux send-keys -t \"$session\" 'clear' Enter
+
+            tmux attach-session -t \"$session\"
+        "
+    else
+        ssh -t "$host" "$@" "
+            export PATH='/usr/bin:/usr/local/bin:/bin:/usr/sbin:/sbin:\$PATH'
+            tmux new-session -A -s \"$session\"
+        "
+    fi
 }
