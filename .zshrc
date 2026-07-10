@@ -200,5 +200,5 @@ ssht() {
         return 1
     fi
 
-    ssh -t "$host" "tmux attach -t $session 2>/dev/null || tmux new-session -s $session"
+    ssh -t "$host" "tmux new-session -A -s $session"
 }
