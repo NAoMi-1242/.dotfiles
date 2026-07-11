@@ -302,6 +302,7 @@ wezterm.on("user-var-changed", function(window, pane, name, value)
     end
 end)
 
+
 ----------- キー割り当て -----------
 config.keys = {
     -- Ctrl + C は、選択中ならコピーし、未選択なら SIGINT を送る
@@ -321,23 +322,37 @@ config.keys = {
     -- Ctrl + V でクリップボードから貼り付ける
     { key = 'v', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
 
-    -- Ctrl + Shift + V でペインを縦に分割する
+    -- Ctrl + Shift + | でペインを左右に分割する（ローカル/Wezterm自身の分割）
     {
-        key = 'v',
-        mods = 'CTRL|SHIFT',
-        action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
-    },
-
-    -- Ctrl + Shift + H でペインを横に分割する
-    {
-        key = 'h',
+        key = '|',
         mods = 'CTRL|SHIFT',
         action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' },
     },
 
-    -- Ctrl + Shift + Alt + H でペインを横に分割してAntigravity CLIを起動
+    -- Ctrl + Shift + _ でペインを上下に分割する（ローカル/Wezterm自身の分割）
     {
-        key = 'h',
+        key = '_',
+        mods = 'CTRL|SHIFT',
+        action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
+    },
+
+    -- Ctrl + Shift + Alt + | : リモートのtmuxに「左右分割」を委譲する
+    {
+        key = '|',
+        mods = 'CTRL|SHIFT|ALT',
+        action = wezterm.action.SendKey { key = '|', mods = 'CTRL|SHIFT|ALT' },
+    },
+
+    -- Ctrl + Shift + Alt + _ : リモートのtmuxに「上下分割」を委譲する
+    {
+        key = '_',
+        mods = 'CTRL|SHIFT|ALT',
+        action = wezterm.action.SendKey { key = '_', mods = 'CTRL|SHIFT|ALT' },
+    },
+
+    -- Ctrl + Shift + Alt + A でペインを横に分割してAntigravity CLIを起動
+    {
+        key = 'a',
         mods = 'CTRL|SHIFT|ALT',
         action = wezterm.action.SplitHorizontal { 
             domain = 'CurrentPaneDomain',
@@ -349,7 +364,7 @@ config.keys = {
         },
     },
 
-    -- Ctrl + Shift + X で現在のペインを確認付きで閉じる
+    -- Ctrl + Shift + X で現在のペインを確認付きで閉じる（ローカル/Wezterm自身のペイン）
     {
         key = 'x',
         mods = 'CTRL|SHIFT',
@@ -360,21 +375,68 @@ config.keys = {
             window:perform_action(wezterm.action.CloseCurrentPane { confirm = true }, pane)
         end),
     },
-    -- Ctrl + Shift + Z でペインのズーム状態を切り替える
+
+    -- Ctrl + Shift + Alt + X : リモートのtmuxペインを閉じる
+    {
+        key = 'x',
+        mods = 'CTRL|SHIFT|ALT',
+        action = wezterm.action.SendKey { key = 'x', mods = 'CTRL|SHIFT|ALT' },
+    },
+
+    -- Ctrl + Shift + Z でペインのズーム状態を切り替える（ローカル/Wezterm自身）
     {
         key = 'z',
         mods = 'CTRL|SHIFT',
         action = wezterm.action_callback(function(window, pane)
             local tab = window:active_tab()
             local currently_zoomed = is_tab_zoomed(tab)
-
-            -- 状態反映の遅れを避けるため、先に見た目を切り替える
             apply_zoom_style(window, not currently_zoomed)
-
-            -- その後で実際のズーム切り替えを実行する
             window:perform_action(wezterm.action.TogglePaneZoomState, pane)
         end),
     },
+
+    -- Ctrl + Shift + Alt + Z : リモートのtmuxペインをズームする
+    {
+        key = 'z',
+        mods = 'CTRL|SHIFT|ALT',
+        action = wezterm.action.SendKey { key = 'z', mods = 'CTRL|SHIFT|ALT' },
+    },
+
+    -- ローカルのペイン移動 (Ctrl + Shift + hjkl)
+    { key = 'h', mods = 'CTRL|SHIFT', action = wezterm.action.ActivatePaneDirection 'Left' },
+    { key = 'j', mods = 'CTRL|SHIFT', action = wezterm.action.ActivatePaneDirection 'Down' },
+    { key = 'k', mods = 'CTRL|SHIFT', action = wezterm.action.ActivatePaneDirection 'Up' },
+    { key = 'l', mods = 'CTRL|SHIFT', action = wezterm.action.ActivatePaneDirection 'Right' },
+
+    -- ローカルのペインリサイズ (Ctrl + Shift + 矢印キー)
+    { key = 'LeftArrow',  mods = 'CTRL|SHIFT', action = wezterm.action.AdjustPaneSize { 'Left', 5 } },
+    { key = 'RightArrow', mods = 'CTRL|SHIFT', action = wezterm.action.AdjustPaneSize { 'Right', 5 } },
+    { key = 'UpArrow',    mods = 'CTRL|SHIFT', action = wezterm.action.AdjustPaneSize { 'Up', 5 } },
+    { key = 'DownArrow',  mods = 'CTRL|SHIFT', action = wezterm.action.AdjustPaneSize { 'Down', 5 } },
+
+    -- Ctrl + Shift + Alt + hjkl : リモートのtmuxにペイン移動を委譲
+    { key = 'h', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'h', mods = 'CTRL|SHIFT|ALT' } },
+    { key = 'j', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'j', mods = 'CTRL|SHIFT|ALT' } },
+    { key = 'k', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'k', mods = 'CTRL|SHIFT|ALT' } },
+    { key = 'l', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'l', mods = 'CTRL|SHIFT|ALT' } },
+
+    -- Ctrl + Shift + Alt + 矢印キー : リモートのtmuxにペインリサイズを委譲
+    { key = 'LeftArrow',  mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'LeftArrow', mods = 'CTRL|SHIFT|ALT' } },
+    { key = 'RightArrow', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'RightArrow', mods = 'CTRL|SHIFT|ALT' } },
+    { key = 'UpArrow',    mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'UpArrow', mods = 'CTRL|SHIFT|ALT' } },
+    { key = 'DownArrow',  mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'DownArrow', mods = 'CTRL|SHIFT|ALT' } },
+
+    -- ローカルのペイン入れ替え (Ctrl + Shift + { or })
+    { key = '{', mods = 'CTRL|SHIFT', action = wezterm.action.PaneSelect { mode = 'SwapWithActive' } },
+    { key = '}', mods = 'CTRL|SHIFT', action = wezterm.action.PaneSelect { mode = 'SwapWithActive' } },
+
+    -- Ctrl + Shift + Alt + { or } : リモートのtmuxにペイン入れ替えを委譲
+    { key = '{', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = '{', mods = 'CTRL|SHIFT|ALT' } },
+    { key = '}', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = '}', mods = 'CTRL|SHIFT|ALT' } },
+
+    -- Ctrl + Shift + Alt + D : リモートのtmuxをデタッチ
+    { key = 'd', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'd', mods = 'CTRL|SHIFT|ALT' } },
+
     -- Ctrl + Shift + P で Launcher を開く
     {
         key = 'p',
