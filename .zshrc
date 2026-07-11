@@ -192,13 +192,66 @@ ssh() {
 }
 
 ssht() {
-    local host="$1"
-    local session="${2:-tokunaga-session}"
+    local session="tokunaga-session"
+    local host=""
+    local ssh_opts=()
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -p|-i|-F|-o)
+                ssh_opts+=("$1" "$2")
+                shift 2
+                ;;
+            -*)
+                ssh_opts+=("$1")
+                shift
+                ;;
+            *)
+                host="$1"
+                shift
+                ;;
+        esac
+    done
 
     if [ -z "$host" ]; then
-        echo "Usage: ssht <host> [session_name]"
+        echo "Usage: ssht [ssh_options] <host>"
         return 1
     fi
 
-    ssh -t "$host" "tmux new-session -A -s $session"
+    if [ ! -f "$HOME/.tmux.conf" ]; then
+        echo "ℹ️ ローカルの ~/.tmux.conf が見つからないため、通常モードで接続します..."
+        ssh -t "${ssh_opts[@]}" "$host" "
+            ORIGINAL_PATH=\$( \${SHELL:-sh} -l -c 'echo \$PATH' )
+            export PATH=\"\$ORIGINAL_PATH\"
+            tmux new-session -A -s \"$session\"
+        "
+        return 0
+    fi
+
+    echo "🚀 $host に接続中（tmux 設定を自動同期しています）..."
+    local tmux_conf_content=$(cat "$HOME/.tmux.conf")
+
+    ssh -t "${ssh_opts[@]}" "$host" "
+        ORIGINAL_PATH=\$( \${SHELL:-sh} -l -c 'echo \$PATH' )
+        export PATH=\"\$ORIGINAL_PATH\"
+
+        # セッションが既に存在するかどうかを事前にチェックしてフラグを立てる
+        if tmux has-session -t \"$session\" 2>/dev/null; then
+            IS_EXISTING=1
+        else
+            IS_EXISTING=0
+            tmux new-session -d -s \"$session\"
+        fi
+
+        tmux eval-config \$(printf '%s' '"${tmux_conf_content//\'/\'\\\'\'}"') 2>/dev/null || \
+        printf '%s' '"${tmux_conf_content//\'/\'\\\'\'}"' | tmux source-file -
+
+        # セッションが新規作成された場合（IS_EXISTINGが0）のみ、ゴミ入力をクリアする
+        if [ \"\$IS_EXISTING\" -eq 0 ]; then
+            tmux send-keys -t \"$session\" C-u
+            tmux send-keys -t \"$session\" 'clear' Enter
+        fi
+
+        tmux attach-session -t \"$session\"
+    "
 }
