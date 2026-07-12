@@ -303,6 +303,32 @@ wezterm.on("user-var-changed", function(window, pane, name, value)
 end)
 
 
+----------- マウス選択時に勝手にクリップボードへコピーしない設定 -----------
+config.mouse_bindings = {
+    -- シングル左クリック：選択のコピーはせず、リンクがあれば開くだけ
+    {
+        event = { Up = { streak = 1, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.OpenLinkAtMouseCursor,
+    },
+    {
+        event = { Up = { streak = 1, button = 'Left' } },
+        mods = 'SHIFT',
+        action = wezterm.action.OpenLinkAtMouseCursor,
+    },
+    -- ダブルクリック（単語選択）・トリプルクリック（行選択）も同様にコピーしない
+    {
+        event = { Up = { streak = 2, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.Nop,
+    },
+    {
+        event = { Up = { streak = 3, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.Nop,
+    },
+}
+
 ----------- キー割り当て -----------
 config.keys = {
     -- Ctrl + C は、選択中ならコピーし、未選択なら SIGINT を送る
