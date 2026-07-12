@@ -227,11 +227,12 @@ ssh() {
 }
 
 ssht() {
-    local session="tokunaga-session"
+    local session="tokunaga"
     local host=""
     local ssh_opts=()
 
-    while [ $# -gt 0 ]; do
+    while [ $# -gt 0 ];
+    do
         case "$1" in
             -p|-i|-F|-o)
                 ssh_opts+=("$1" "$2")
@@ -248,7 +249,8 @@ ssht() {
         esac
     done
 
-    if [ -z "$host" ]; then
+    if [ -z "$host" ];
+    then
         echo "Usage: ssht [ssh_options] <host>"
         return 1
     fi
@@ -258,6 +260,7 @@ ssht() {
         ssh -t "${ssh_opts[@]}" "$host" "
             ORIGINAL_PATH=\$( \${SHELL:-sh} -l -c 'echo \$PATH' )
             export PATH=\"\$ORIGINAL_PATH\"
+            export TZ=\"Asia/Tokyo\"
             if command -v tmux &>/dev/null; then
                 tmux new-session -A -s \"$session\"
             else
@@ -274,6 +277,7 @@ ssht() {
     ssh -t "${ssh_opts[@]}" "$host" "
         ORIGINAL_PATH=\$( \${SHELL:-sh} -l -c 'echo \$PATH' )
         export PATH=\"\$ORIGINAL_PATH\"
+        export TZ=\"Asia/Tokyo\" # ← タイムゾーンを設定
 
         # リモート側のtmux有無をチェック
         if ! command -v tmux &>/dev/null; then
@@ -283,14 +287,17 @@ ssht() {
         fi
 
         # セッションがなければ新規作成（裏で起動）
-        if ! tmux has-session -t \"$session\" 2>/dev/null; then
+        if ! tmux has-session -t \"$session\" 2>/dev/null;
+        then
             tmux new-session -d -s \"$session\"
         fi
 
         # base64をデコードして安全に設定を適用
-        if command -v base64 &>/dev/null; then
+        if command -v base64 &>/dev/null;
+        then
             echo \"$tmux_conf_b64\" | base64 -d | tmux source-file - 2>/dev/null
-        elif command -v openssl &>/dev/null; then
+        elif command -v openssl &>/dev/null;
+        then
             echo \"$tmux_conf_b64\" | openssl base64 -d | tmux source-file - 2>/dev/null
         fi
 
