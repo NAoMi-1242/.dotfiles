@@ -460,6 +460,21 @@ config.keys = {
     { key = '{', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = '{', mods = 'CTRL|SHIFT|ALT' } },
     { key = '}', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = '}', mods = 'CTRL|SHIFT|ALT' } },
 
+    -- Ctrl + Shift + Alt + T : リモートのtmuxに「新規ウィンドウ作成」を委譲する
+    { key = 't', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 't', mods = 'CTRL|SHIFT|ALT' } },
+
+    -- Ctrl + Alt + 0~9 : tmuxのプレフィックス(Ctrl+B)を挟んで直接ウィンドウ番号を叩く（配列不問・絶対確実）
+    { key = '0', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x020" },
+    { key = '1', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x021" },
+    { key = '2', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x022" },
+    { key = '3', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x023" },   
+    { key = '4', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x024" },
+    { key = '5', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x025" },
+    { key = '6', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x026" },
+    { key = '7', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x027" },
+    { key = '8', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x028" },
+    { key = '9', mods = 'CTRL|ALT', action = wezterm.action.SendString "\x029" },
+
     -- Ctrl + Shift + Alt + D : リモートのtmuxをデタッチ
     { key = 'd', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.SendKey { key = 'd', mods = 'CTRL|SHIFT|ALT' } },
 
