@@ -151,6 +151,41 @@ snc() {
     fi
 }
 
+tmux() {
+    # 引数がない、またはセッション作成・アタッチ系コマンドが含まれているか確認
+    # (引数がある通常のtmuxコマンド、例えば tmux ls などはそのままスルーさせる)
+    local is_session_cmd=0
+    if [ $# -eq 0 ]; then
+        is_session_cmd=1
+    else
+        for arg in "$@"; do
+            if [[ "$arg" =~ ^(new-session|new|attach-session|attach|at)$ ]]; then
+                is_session_cmd=1
+                break
+            fi
+        done
+    fi
+
+    # セッション開始・アタッチ系の時だけ .tmux.conf をクレンジングして適用
+    if [ "$is_session_cmd" -eq 1 ] && [ -f "$HOME/.tmux.conf" ]; then
+        local tmp_conf="${TMPDIR:-/tmp}/.tmux.${USER}.conf"
+
+        # \r (CR) を削除して一時ファイルにLF形式で保存
+        tr -d '\r' < "$HOME/.tmux.conf" > "$tmp_conf" 2>/dev/null
+
+        # 一時ファイルの設定を読み込ませて tmux を実行
+        command tmux -f "$tmp_conf" "$@"
+
+        # tmux 終了後に一時ファイルを削除
+        local exit_status=$?
+        rm -f "$tmp_conf"
+        return $exit_status
+    fi
+
+    # それ以外のコマンド（tmux ls や tmux kill-server など）はそのまま実行
+    command tmux "$@"
+}
+
 ssh() {
     if [[ "$*" == *"shimakaze@"* ]]; then
         if command -v sshpass &> /dev/null; then
@@ -223,35 +258,43 @@ ssht() {
         ssh -t "${ssh_opts[@]}" "$host" "
             ORIGINAL_PATH=\$( \${SHELL:-sh} -l -c 'echo \$PATH' )
             export PATH=\"\$ORIGINAL_PATH\"
-            tmux new-session -A -s \"$session\"
+            if command -v tmux &>/dev/null; then
+                tmux new-session -A -s \"$session\"
+            else
+                echo \"⚠️ リモート環境に tmux が見つからないため、通常のシェルを起動します。\"
+                \${SHELL:-sh} -l
+            fi
         "
         return 0
     fi
 
     echo "🚀 $host に接続中（tmux 設定を自動同期しています）..."
-    local tmux_conf_content=$(cat "$HOME/.tmux.conf")
+    local tmux_conf_b64=$(tr -d '\r' < "$HOME/.tmux.conf" | base64 | tr -d '\n')
 
     ssh -t "${ssh_opts[@]}" "$host" "
         ORIGINAL_PATH=\$( \${SHELL:-sh} -l -c 'echo \$PATH' )
         export PATH=\"\$ORIGINAL_PATH\"
 
-        # セッションが既に存在するかどうかを事前にチェックしてフラグを立てる
-        if tmux has-session -t \"$session\" 2>/dev/null; then
-            IS_EXISTING=1
-        else
-            IS_EXISTING=0
+        # リモート側のtmux有無をチェック
+        if ! command -v tmux &>/dev/null; then
+            echo \"⚠️ リモート環境に tmux がインストールされていないため、通常のシェルで接続します。\"
+            \${SHELL:-sh} -l
+            exit 0
+        fi
+
+        # セッションがなければ新規作成（裏で起動）
+        if ! tmux has-session -t \"$session\" 2>/dev/null; then
             tmux new-session -d -s \"$session\"
         fi
 
-        tmux eval-config \$(printf '%s' '"${tmux_conf_content//\'/\'\\\'\'}"') 2>/dev/null || \
-        printf '%s' '"${tmux_conf_content//\'/\'\\\'\'}"' | tmux source-file -
-
-        # セッションが新規作成された場合（IS_EXISTINGが0）のみ、ゴミ入力をクリアする
-        if [ \"\$IS_EXISTING\" -eq 0 ]; then
-            tmux send-keys -t \"$session\" C-u
-            tmux send-keys -t \"$session\" 'clear' Enter
+        # base64をデコードして安全に設定を適用
+        if command -v base64 &>/dev/null; then
+            echo \"$tmux_conf_b64\" | base64 -d | tmux source-file - 2>/dev/null
+        elif command -v openssl &>/dev/null; then
+            echo \"$tmux_conf_b64\" | openssl base64 -d | tmux source-file - 2>/dev/null
         fi
 
+        # ターゲットセッションにアタッチ
         tmux attach-session -t \"$session\"
     "
 }
