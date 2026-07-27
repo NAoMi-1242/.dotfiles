@@ -14,46 +14,6 @@ config.launch_menu = {
         args = { "pwsh.exe" },
         domain = { DomainName = "local" },
     },
-    
-
-    -- 講義用 Git Bash (MINGW64) 後で消す
-    {
-        label = "Git Bash (MINGW64)",
-        args = { 
-            "C:\\oit\\se26-byod\\PortableGit-2.50.0-64\\bin\\bash.exe", 
-            "--login",
-            "-i",
-            "-c", 
-            "cd && exec bash" 
-        },
-        domain = { DomainName = "local" },
-    },
-    -- Anaconda Prompt (base)
-    {
-        label = "Anaconda Prompt (base)",
-        args = {
-            "cmd.exe",
-            "/K",
-            "C:\\ProgramData\\anaconda3\\Scripts\\activate.bat",
-            "C:\\ProgramData\\anaconda3"
-        },
-        domain = { DomainName = "local" },
-    },
-    
-
-    -- Windows PowerShell (通常)
-    {
-        label = "Windows PowerShell",
-        args = { "powershell.exe" },
-        domain = { DomainName = "local" },
-    },
-
-    -- Command Prompt (通常)
-    {
-        label = "Command Prompt",
-        args = { "cmd.exe" },
-        domain = { DomainName = "local" },
-    },
 
     -- Windows Terminal PowerShell (管理者)
     {
@@ -64,6 +24,13 @@ config.launch_menu = {
             "-Command",
             "Start-Process wt.exe -Verb RunAs -ArgumentList 'new-tab pwsh.exe'"
         },
+        domain = { DomainName = "local" },
+    },
+
+    -- Command Prompt (通常)
+    {
+        label = "Command Prompt",
+        args = { "cmd.exe" },
         domain = { DomainName = "local" },
     },
 
