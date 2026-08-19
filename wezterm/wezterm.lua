@@ -400,6 +400,12 @@ config.keys = {
     -- Ctrl + Alt + X : 現在のペインを閉じる
     { key = 'x', mods = 'CTRL|ALT', action = wezterm.action.SendKey { key = 'x', mods = 'CTRL|ALT' } },
 
+    -- Ctrl + Alt + W : 現在のウィンドウを閉じる
+    { key = 'w', mods = 'CTRL|ALT', action = wezterm.action.SendKey { key = 'w', mods = 'CTRL|ALT' } },
+
+    -- Ctrl + Alt + S : セッション一覧を表示
+    { key = 's', mods = 'CTRL|ALT', action = wezterm.action.SendKey { key = 's', mods = 'CTRL|ALT' } },
+
     -- Ctrl + Alt + Z : ペインをズーム
     { key = 'z', mods = 'CTRL|ALT', action = wezterm.action.SendKey { key = 'z', mods = 'CTRL|ALT' } },
 
