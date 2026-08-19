@@ -227,42 +227,77 @@ ssh() {
 }
 
 ssht() {
-    local session="tokunaga"
     local host=""
+    local session=""
     local ssh_opts=()
 
-    while [ $# -gt 0 ];
-    do
+    while [ $# -gt 0 ]; do
         case "$1" in
-            -p|-i|-F|-o)
+            # 値（引数）を1つ取る SSH 主要オプション
+            -B|-b|-c|-D|-E|-e|-F|-I|-i|-J|-L|-l|-m|-O|-o|-P|-p|-R|-S|-W|-w)
+                if [ $# -lt 2 ]; then
+                    echo "⚠️  エラー: オプション $1 には引数が必要です。" >&2
+                    return 1
+                fi
                 ssh_opts+=("$1" "$2")
                 shift 2
                 ;;
+            # ssht関数自体のオプション終了フラグ (--)
+            --)
+                shift
+                while [ $# -gt 0 ]; do
+                    if [ -z "$host" ]; then
+                        host="$1"
+                    elif [ -z "$session" ]; then
+                        session="$1"
+                    else
+                        echo "⚠️  エラー: 余分な引数が指定されています: $1" >&2
+                        return 1
+                    fi
+                    shift
+                done
+                break
+                ;;
+            # 引数を取らないフラグ系オプション (-v, -4, -6, -A, -C, -X など)
+            # および -p2222 や -oStrictHostKeyChecking=no などの結合形式
             -*)
                 ssh_opts+=("$1")
                 shift
                 ;;
+            # オプション以外の引数 (1つ目: ホスト, 2つ目: セッション名)
             *)
-                host="$1"
+                if [ -z "$host" ]; then
+                    host="$1"
+                elif [ -z "$session" ]; then
+                    session="$1"
+                else
+                    echo "⚠️  エラー: 余分な引数が指定されています: $1" >&2
+                    return 1
+                fi
                 shift
                 ;;
         esac
     done
 
-    if [ -z "$host" ];
-    then
-        echo "Usage: ssht [ssh_options] <host>"
+    # セッション名が省略された場合はデフォルト値を使用
+    session="${session:-tokunaga}"
+
+    if [ -z "$host" ]; then
+        echo "Usage: ssht [ssh_options] <host> [session_name]"
         return 1
     fi
 
+    # tmuxターゲット指定で完全一致を要求するための = プレフィックス
+    local target_session="=${session}"
+
     if [ ! -f "$HOME/.tmux.conf" ]; then
-        echo "ℹ️ ローカルの ~/.tmux.conf が見つからないため、通常モードで接続します..."
+        echo "ℹ️  ローカルの ~/.tmux.conf が見つからないため、通常モードで接続します..."
         ssh -t "${ssh_opts[@]}" "$host" "
             ORIGINAL_PATH=\$( \${SHELL:-sh} -l -c 'echo \$PATH' )
             export PATH=\"\$ORIGINAL_PATH\"
             export TZ=\"Asia/Tokyo\"
             if command -v tmux &>/dev/null; then
-                tmux new-session -A -s \"$session\"
+                tmux new-session -A -s ${(q)session}
             else
                 echo \"⚠️ リモート環境に tmux が見つからないため、通常のシェルを起動します。\"
                 \${SHELL:-sh} -l
@@ -271,37 +306,34 @@ ssht() {
         return 0
     fi
 
-    echo "🚀 $host に接続中（tmux 設定を自動同期しています）..."
+    echo "🚀 $host に接続中 (Session: $session / tmux 設定を自動同期しています)..."
     local tmux_conf_b64=$(tr -d '\r' < "$HOME/.tmux.conf" | base64 | tr -d '\n')
 
+    # リモート側で実行するスクリプトを安全に組み立て
     ssh -t "${ssh_opts[@]}" "$host" "
         ORIGINAL_PATH=\$( \${SHELL:-sh} -l -c 'echo \$PATH' )
         export PATH=\"\$ORIGINAL_PATH\"
-        export TZ=\"Asia/Tokyo\" # ← タイムゾーンを設定
+        export TZ=\"Asia/Tokyo\"
 
-        # リモート側のtmux有無をチェック
         if ! command -v tmux &>/dev/null; then
             echo \"⚠️ リモート環境に tmux がインストールされていないため、通常のシェルで接続します。\"
             \${SHELL:-sh} -l
             exit 0
         fi
 
-        # セッションがなければ新規作成（裏で起動）
-        if ! tmux has-session -t \"$session\" 2>/dev/null;
-        then
-            tmux new-session -d -s \"$session\"
+        # セッションが存在しない場合のみ新規作成
+        if ! tmux has-session -t ${(q)target_session} 2>/dev/null; then
+            tmux new-session -d -s ${(q)session}
         fi
 
-        # base64をデコードして安全に設定を適用
-        if command -v base64 &>/dev/null;
-        then
-            echo \"$tmux_conf_b64\" | base64 -d | tmux source-file - 2>/dev/null
-        elif command -v openssl &>/dev/null;
-        then
-            echo \"$tmux_conf_b64\" | openssl base64 -d | tmux source-file - 2>/dev/null
+        # base64をデコードして設定を適用
+        if command -v base64 &>/dev/null; then
+            echo ${(q)tmux_conf_b64} | base64 -d | tmux source-file - 2>/dev/null
+        elif command -v openssl &>/dev/null; then
+            echo ${(q)tmux_conf_b64} | openssl base64 -d | tmux source-file - 2>/dev/null
         fi
 
         # ターゲットセッションにアタッチ
-        tmux attach-session -t \"$session\"
+        tmux attach-session -t ${(q)target_session}
     "
 }
