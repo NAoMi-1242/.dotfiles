@@ -15,6 +15,18 @@ config.launch_menu = {
         domain = { DomainName = "local" },
     },
 
+    -- JAVA演習
+    {
+        label = "Java26 BYOD",
+        args = {
+            [[C:\oit\java26-byod\PortableGit-2.55.0.3-64\usr\bin\bash.exe]],
+            "--login",
+            "-i",
+        },
+        domain = { DomainName = "local" },
+	cwd = [[C:\Users\81806\oithomes\java\kadai\java26]],
+    },
+
     -- Windows Terminal PowerShell (管理者)
     {
         label = "Windows Terminal PowerShell (Admin)",
