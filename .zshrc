@@ -1,142 +1,112 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# ============================================================
+# ~/.zshrc
+# Shared Zsh configuration
+# ============================================================
+
+
+# ------------------------------------------------------------
+# PATH
+# ------------------------------------------------------------
+
+# Add ~/.local/bin when available.
+if [[ -d "$HOME/.local/bin" ]]; then
+    path=("$HOME/.local/bin" $path)
 fi
 
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+# Remove duplicate PATH entries.
+typeset -U path PATH
 
-# Path to your Oh My Zsh installation.
+
+# ------------------------------------------------------------
+# Local environment
+# ------------------------------------------------------------
+
+# Some tools/installers create ~/.local/bin/env.
+# Load it only when it exists.
+[[ -f "$HOME/.local/bin/env" ]] && source "$HOME/.local/bin/env"
+
+
+# ------------------------------------------------------------
+# Oh My Zsh
+# ------------------------------------------------------------
+
 export ZSH="$HOME/.oh-my-zsh"
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time Oh My Zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-# ZSH_THEME="powerlevel10k/powerlevel10k"
+if [[ -f "$ZSH/oh-my-zsh.sh" ]]; then
+    plugins=(
+        git
+        zsh-autosuggestions
+        zsh-syntax-highlighting
+    )
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+    source "$ZSH/oh-my-zsh.sh"
+fi
 
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
 
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
+# ------------------------------------------------------------
+# Starship
+# ------------------------------------------------------------
 
-# Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+if (( $+commands[starship] )); then
+    eval "$(starship init zsh)"
+fi
 
-# Uncomment the following line to change how often to auto-update (in days).
-# zstyle ':omz:update' frequency 13
 
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
-
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
-
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
-
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
-# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
-
-source $ZSH/oh-my-zsh.sh
-
-# User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='nvim'
-# fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch $(uname -m)"
-
-# Set personal aliases, overriding those provided by Oh My Zsh libs,
-# plugins, and themes. Aliases can be placed here, though Oh My Zsh
-# users are encouraged to define aliases within a top-level file in
-# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
-# - $ZSH_CUSTOM/aliases.zsh
-# - $ZSH_CUSTOM/macos.zsh
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-. "$HOME/.local/bin/env"
-
-eval "$(starship init zsh)"
+# ------------------------------------------------------------
+# zsh-autosuggestions
+# ------------------------------------------------------------
 
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=117,bold"
-# export LS_COLORS="$LS_COLORS:ow=01;34:tw=01;44"
 
-alias ls='lsd'
-alias l='lsd -l --group-dirs=first'
-alias ll='lsd -l --group-dirs=first'
-alias la='lsd -a --group-dirs=first'
-alias lla='lsd -al --group-dirs=first'
-alias lt='lsd --tree --group-dirs=first'
-alias bat='batcat'
-alias imgcat='wezterm.exe imgcat'
-alias nv='nvim'
-alias ag='clear && agy'
+
+# ------------------------------------------------------------
+# Aliases
+# ------------------------------------------------------------
+
+# lsd
+if (( $+commands[lsd] )); then
+    alias ls='lsd'
+    alias l='lsd -l --group-dirs=first'
+    alias ll='lsd -l --group-dirs=first'
+    alias la='lsd -a --group-dirs=first'
+    alias lla='lsd -al --group-dirs=first'
+    alias lt='lsd --tree --group-dirs=first'
+fi
+
+# bat
+if (( $+commands[batcat] )); then
+    alias bat='batcat'
+fi
+
+# WezTerm
+if (( $+commands[wezterm.exe] )); then
+    alias imgcat='wezterm.exe imgcat'
+fi
+
+# Neovim
+if (( $+commands[nvim] )); then
+    alias nv='nvim'
+fi
+
+# Antigravity
+if (( $+commands[agy] )); then
+    alias ag='clear && agy'
+fi
+
+
+# ------------------------------------------------------------
+# NVM
+# ------------------------------------------------------------
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# Added by Antigravity CLI installer
-export PATH="/home/naomi/.local/bin:$PATH"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+
+# ------------------------------------------------------------
+# snc
+# ------------------------------------------------------------
 
 snc() {
     # 引数はすべて無視し、常に単体で実体スクリプトを実行
@@ -150,6 +120,11 @@ snc() {
         echo "✅ 設定の反映がすべて完了しました。"
     fi
 }
+
+
+# ------------------------------------------------------------
+# tmux
+# ------------------------------------------------------------
 
 tmux() {
     # 引数がない、またはセッション作成・アタッチ系コマンドが含まれているか確認
@@ -185,6 +160,11 @@ tmux() {
     # それ以外のコマンド（tmux ls や tmux kill-server など）はそのまま実行
     command tmux "$@"
 }
+
+
+# ------------------------------------------------------------
+# SSH
+# ------------------------------------------------------------
 
 ssh() {
     if [[ "$*" == *"shimakaze@"* ]]; then
@@ -226,6 +206,15 @@ ssh() {
     fi
 }
 
+
+# ------------------------------------------------------------
+# ssht
+#
+# NOTE:
+# この関数は既存の挙動を維持するため、
+# 元の .zshrc のコードをそのまま使用。
+# ------------------------------------------------------------
+
 ssht() {
     local host=""
     local session=""
@@ -242,6 +231,7 @@ ssht() {
                 ssh_opts+=("$1" "$2")
                 shift 2
                 ;;
+
             # ssht関数自体のオプション終了フラグ (--)
             --)
                 shift
@@ -258,12 +248,14 @@ ssht() {
                 done
                 break
                 ;;
+
             # 引数を取らないフラグ系オプション (-v, -4, -6, -A, -C, -X など)
             # および -p2222 や -oStrictHostKeyChecking=no などの結合形式
             -*)
                 ssh_opts+=("$1")
                 shift
                 ;;
+
             # オプション以外の引数 (1つ目: ホスト, 2つ目: セッション名)
             *)
                 if [ -z "$host" ]; then
@@ -337,3 +329,14 @@ ssht() {
         tmux attach-session -t ${(q)target_session}
     "
 }
+
+
+# ------------------------------------------------------------
+# Machine-specific configuration
+# ------------------------------------------------------------
+
+# 端末固有の設定が必要な場合は ~/.zshrc.local に記述する。
+# ~/.zshrc.local はdotfilesのGit管理対象には含めない。
+if [[ -f "$HOME/.zshrc.local" ]]; then
+    source "$HOME/.zshrc.local"
+fi

@@ -1,16 +1,56 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Windows側のユーザー名をPowerShell経由で動的に取得（CRLFの改行コードを削除）
-WIN_USER=$(pwsh.exe -NoProfile -Command "[Environment]::UserName" | tr -d '\r\n')
-DOTFILES_DIR="/mnt/c/Users/${WIN_USER}/.dotfiles"
+set -u
+
+# ============================================================
+# Determine dotfiles directory
+# ============================================================
+
+# WSL
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    if command -v pwsh.exe >/dev/null 2>&1; then
+        WIN_USER=$(pwsh.exe -NoProfile -Command \
+            "[Environment]::UserName" | tr -d '\r\n')
+
+        DOTFILES_DIR="/mnt/c/Users/${WIN_USER}/.dotfiles"
+    else
+        echo "❌ WSL環境ですが pwsh.exe が見つかりません。"
+        exit 1
+    fi
+
+# Normal Linux
+else
+    DOTFILES_DIR="$HOME/personal/.dotfiles"
+fi
+
+
+# ============================================================
+# Check repository
+# ============================================================
 
 if [ ! -d "$DOTFILES_DIR" ]; then
     echo "❌ ドットファイルディレクトリが見つかりません: $DOTFILES_DIR"
     exit 1
 fi
 
+if [ ! -d "$DOTFILES_DIR/.git" ]; then
+    echo "❌ Gitリポジトリではありません: $DOTFILES_DIR"
+    exit 1
+fi
+
+
+# ============================================================
+# Git pull
+# ============================================================
+
 cd "$DOTFILES_DIR" || exit 1
+
 CURRENT_BRANCH=$(git branch --show-current)
+
+if [ -z "$CURRENT_BRANCH" ]; then
+    echo "❌ 現在のGitブランチを取得できませんでした。"
+    exit 1
+fi
 
 echo "🔄 ドットファイルリポジトリを更新（Pull）しています..."
 git pull origin "$CURRENT_BRANCH"
