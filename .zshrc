@@ -8,13 +8,12 @@
 # PATH
 # ------------------------------------------------------------
 
-# Add ~/.local/bin when available.
-if [[ -d "$HOME/.local/bin" ]]; then
-    path=("$HOME/.local/bin" $path)
-fi
+# PATH/path must remain global even when .zshrc is sourced
+# from inside a function such as snc().
+typeset -gU path PATH
 
-# Remove duplicate PATH entries.
-typeset -U path PATH
+# User-local commands
+path=("$HOME/.local/bin" $path)
 
 
 # ------------------------------------------------------------
