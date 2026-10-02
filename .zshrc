@@ -47,6 +47,12 @@ fi
 # ------------------------------------------------------------
 
 if (( $+commands[starship] )); then
+    if [[ -n "$SSH_CONNECTION" ]]; then
+        export STARSHIP_CONFIG="$HOME/.config/starship-remote.toml"
+    else
+        export STARSHIP_CONFIG="$HOME/.config/starship.toml"
+    fi
+
     eval "$(starship init zsh)"
 fi
 

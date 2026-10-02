@@ -1,0 +1,174 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+[](color_remote)\
+$username\
+$hostname\
+[](bg:color_directory fg:color_remote)\
+$directory\
+[](fg:color_directory bg:color_git)\
+$git_branch\
+$git_status\
+[](fg:color_git bg:color_time)\
+$time\
+[](fg:color_time bg:color_bg3)\
+$cmd_duration\
+[](fg:color_bg3 bg:color_bg1)\
+$character\
+$status\
+[ ](fg:color_bg1)\
+$line_break\
+[  ](bold fg:color_green)"""
+
+palette = 'remote'
+
+# ============================================================
+# Remote palette
+# Blue / cyan / purple based palette
+# ============================================================
+
+[palettes.remote]
+color_fg0 = '#fbf1c7'
+
+color_bg1 = '#282828'
+color_bg3 = '#504945'
+
+color_remote    = '#3f7187'
+color_directory = '#076678'
+color_git       = '#527b83'
+color_time      = '#76566f'
+
+color_green = '#98971a'
+color_red   = '#cc241d'
+
+
+# ============================================================
+# OS
+# ============================================================
+
+[os]
+disabled = false
+style = "bold bg:color_remote fg:color_fg0"
+
+[os.symbols]
+Windows = " "
+Ubuntu = " "
+SUSE = " "
+Raspbian = "󰐿 "
+Mint = "󰣭 "
+Macos = "󰀵 "
+Manjaro = " "
+Linux = "󰌽 "
+Gentoo = "󰣨 "
+Fedora = "󰣛 "
+Alpine = " "
+Amazon = " "
+Android = " "
+AOSC = " "
+Arch = "󰣇 "
+Artix = "󰣇 "
+EndeavourOS = " "
+CentOS = " "
+Debian = "󰣚 "
+Redhat = "󱄛 "
+RedHatEnterprise = "󱄛 "
+Pop = " "
+
+
+# ============================================================
+# Username + hostname
+# ============================================================
+
+[username]
+show_always = true
+style_user = "bold bg:color_remote fg:color_fg0"
+style_root = "bold bg:color_remote fg:color_fg0"
+format = '[$user]($style)'
+
+[hostname]
+ssh_only = true
+style = "bold bg:color_remote fg:color_fg0"
+format = '[@$hostname ]($style)'
+
+
+# ============================================================
+# Directory
+# ============================================================
+
+[directory]
+style = "bold fg:color_fg0 bg:color_directory"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"Developer" = "󰲋 "
+
+
+# ============================================================
+# Git
+# ============================================================
+
+[git_branch]
+symbol = ""
+style = "bold bg:color_git fg:color_fg0"
+format = '[ $symbol $branch ]($style)'
+
+[git_status]
+style = "bold bg:color_git fg:color_fg0"
+format = '[($all_status$ahead_behind )]($style)'
+
+
+# ============================================================
+# Time
+# ============================================================
+
+[time]
+disabled = false
+time_format = "%R"
+style = "bold bg:color_time fg:color_fg0"
+format = '[  $time ]($style)'
+
+
+# ============================================================
+# Command duration
+# ============================================================
+
+[cmd_duration]
+disabled = false
+style = "bold bg:color_bg3 fg:color_fg0"
+format = '[  $duration ]($style)'
+min_time = 2000
+
+
+# ============================================================
+# Character
+# ============================================================
+
+[character]
+disabled = false
+format = "$symbol"
+success_symbol = '[ ✓  ](bold fg:color_green bg:color_bg1)'
+error_symbol = '[ ✗ ](bold fg:color_red bg:color_bg1)'
+
+
+# ============================================================
+# Status
+# ============================================================
+
+[status]
+disabled = false
+style = "bg:color_bg1"
+format = '[$int ](bold fg:color_red $style)'
+
+
+# ============================================================
+# Line break
+# ============================================================
+
+[line_break]
+disabled = false
